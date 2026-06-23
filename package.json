@@ -1,0 +1,19 @@
+{
+  "name": "recipe-app-backend",
+  "version": "1.0.0",
+  "description": "server-side functionality for the recipe app project",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/annaabbott/recipe-app-backend.git"
+  },
+  "author": "Anna Abbott",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/annaabbott/recipe-app-backend/issues"
+  },
+  "homepage": "https://github.com/annaabbott/recipe-app-backend#readme"
+}
