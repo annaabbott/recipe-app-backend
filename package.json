@@ -4,6 +4,7 @@
   "description": "server-side functionality for the recipe app project",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "node --test"
   },
   "repository": {
@@ -15,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/annaabbott/recipe-app-backend/issues"
   },
-  "homepage": "https://github.com/annaabbott/recipe-app-backend#readme"
+  "homepage": "https://github.com/annaabbott/recipe-app-backend#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }
