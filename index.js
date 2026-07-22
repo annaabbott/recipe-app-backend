@@ -1,4 +1,11 @@
 import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import Recipe from "./models/recipe.js";
+
+// const mongoURI = "mongodb://localhost:27017/recipeDB";
+// mongoose.set("strictQuery", true);
+// mongoose.connect(mongoURI);
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,6 +31,15 @@ let recipes = [
   },
 ];
 
+// const recipeSchema = new mongoose.Schema({
+//   id: { type: Number },
+//   name: { type: String, required: true },
+//   ingredients: { type: [String], required: true },
+//   favorite: { type: Boolean },
+// });
+
+// const Recipe = mongoose.model("Recipe", recipeSchema);
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -31,16 +47,29 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/recipes", (req, res) => {
-  res.json(recipes);
+  Recipe.find({})
+    .then((recipes) => {
+      res.json(recipes);
+    })
+    .catch((error) => {
+      console.error("Error fetching recipes:", error);
+      res.status(500).json({ error: "Internal server error" });
+    });
 });
 
 app.get("/api/recipes/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const recipe = recipes.find((r) => r.id === id);
-  if (!recipe) {
-    return res.status(404).json({ error: "Recipe not found" });
-  }
-  res.json(recipe);
+  Recipe.findById(id)
+    .then((recipe) => {
+      if (!recipe) {
+        return res.status(404).json({ error: "Recipe not found" });
+      }
+      res.json(recipe);
+    })
+    .catch((error) => {
+      console.error("Error fetching recipe:", error);
+      res.status(500).json({ error: "Internal server error" });
+    });
 });
 
 app.post("/api/recipes", (req, res) => {
