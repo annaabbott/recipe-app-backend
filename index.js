@@ -10,93 +10,114 @@ import Recipe from "./models/recipe.js";
 const app = express();
 const port = process.env.PORT || 3000;
 
-let recipes = [
-  {
-    id: 1,
-    name: "Pasta",
-    ingredients: ["pasta", "sauce", "cheese"],
-    favorite: false,
-  },
-  {
-    id: 2,
-    name: "Salad",
-    ingredients: ["lettuce", "tomato", "cucumber"],
-    favorite: true,
-  },
-  {
-    id: 3,
-    name: "Soup",
-    ingredients: ["broth", "vegetables", "herbs"],
-    favorite: false,
-  },
-];
-
-// const recipeSchema = new mongoose.Schema({
-//   id: { type: Number },
-//   name: { type: String, required: true },
-//   ingredients: { type: [String], required: true },
-//   favorite: { type: Boolean },
-// });
-
-// const Recipe = mongoose.model("Recipe", recipeSchema);
-
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Hello, World!");
+app.get("/api/recipes", async (req, res) => {
+  console.log("Fetching all recipes...");
+  try {
+    const recipes = await Recipe.find({});
+    res.json(recipes);
+  } catch (error) {
+    console.error("Error fetching recipes:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-app.get("/api/recipes", (req, res) => {
-  Recipe.find({})
-    .then((recipes) => {
-      res.json(recipes);
-    })
-    .catch((error) => {
-      console.error("Error fetching recipes:", error);
-      res.status(500).json({ error: "Internal server error" });
-    });
+app.get("/api/recipes/:id", async (req, res) => {
+  console.log(`Fetching recipe with id: ${req.params.id}`);
+  const id = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Malformed id" });
+  }
+
+  try {
+    const recipe = await Recipe.findById(id);
+    if (!recipe) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+    res.json(recipe);
+  } catch (error) {
+    console.error("Error fetching recipe:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-app.get("/api/recipes/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  Recipe.findById(id)
-    .then((recipe) => {
-      if (!recipe) {
-        return res.status(404).json({ error: "Recipe not found" });
-      }
-      res.json(recipe);
-    })
-    .catch((error) => {
-      console.error("Error fetching recipe:", error);
-      res.status(500).json({ error: "Internal server error" });
-    });
-});
-
-app.post("/api/recipes", (req, res) => {
-  const { name, ingredients, favorite } = req.body;
-  const newRecipe = {
-    id: recipes.length + 1,
-    name,
-    ingredients,
-    favorite: favorite || false,
-  };
-  if (!name || !ingredients) {
+app.post("/api/recipes", async (req, res) => {
+  const body = req.body;
+  if (!body.name || !body.ingredients) {
     return res.status(400).json({ error: "Name and ingredients are required" });
   }
-  recipes.push(newRecipe);
-  res.status(201).json(newRecipe);
+
+  const newRecipe = {
+    name: body.name,
+    ingredients: body.ingredients,
+    favorite: body.favorite || false,
+  };
+
+  try {
+    const recipe = new Recipe(newRecipe);
+    const savedRecipe = await recipe.save();
+    res.status(201).json(savedRecipe);
+  } catch (error) {
+    console.error("Error saving recipe:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-app.delete("/api/recipes/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const recipeIndex = recipes.findIndex((r) => r.id === id);
-  if (recipeIndex === -1) {
-    return res.status(404).json({ error: "Recipe not found" });
+app.delete("/api/recipes/:id", async (req, res) => {
+  const id = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Malformed id" });
   }
-  recipes.splice(recipeIndex, 1);
-  res.json({ message: "Recipe deleted" });
+
+  try {
+    const deletedRecipe = await Recipe.findByIdAndDelete(id);
+    if (!deletedRecipe) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+    res.status(204).end();
+  } catch (error) {
+    console.error("Error deleting recipe:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.put("/api/recipes/:id", async (req, res) => {
+  const id = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Malformed id" });
+  }
+
+  const body = req.body;
+  if (!body.name || !body.ingredients) {
+    return res.status(400).json({ error: "Name and ingredients are required" });
+  }
+
+  try {
+    const updated = await Recipe.findByIdAndUpdate(
+      id,
+      {
+        name: body.name,
+        ingredients: body.ingredients,
+        favorite: body.favorite ?? false,
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error updating recipe:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 app.listen(port, () => {
-  console.log(`Recipe app backend is running on port ${port}`);
+  console.log(`Recipe app backend is starting on port ${port}...`);
 });

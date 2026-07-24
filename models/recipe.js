@@ -1,12 +1,16 @@
-import "mongoose";
+import dotenv from "dotenv";
+dotenv.config();
+
+import mongoose from "mongoose";
 
 mongoose.set("strictQuery", false);
 
 const url = process.env.MONGODB_URI || "mongodb://localhost:27017/recipeDB";
+console.log("Connecting to", url);
 
 mongoose
   .connect(url, { family: 4 })
-  .then((result) => {
+  .then(() => {
     console.log("Connected to MongoDB");
   })
   .catch((error) => {
@@ -14,7 +18,6 @@ mongoose
   });
 
 const recipeSchema = new mongoose.Schema({
-  id: { type: Number },
   name: { type: String, required: true },
   ingredients: { type: [String], required: true },
   favorite: { type: Boolean },
@@ -28,4 +31,4 @@ recipeSchema.set("toJSON", {
   },
 });
 
-module.exports = mongoose.model("Recipe", recipeSchema);
+export default mongoose.model("Recipe", recipeSchema);
