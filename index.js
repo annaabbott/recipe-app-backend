@@ -2,6 +2,9 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import Recipe from "./models/recipe.js";
+import errorHandler from "./middleware/errorHandler.js";
+
+dotenv.config();
 
 // const mongoURI = "mongodb://localhost:27017/recipeDB";
 // mongoose.set("strictQuery", true);
@@ -12,18 +15,17 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get("/api/recipes", async (req, res) => {
+app.get("/api/recipes", async (req, res, next) => {
   console.log("Fetching all recipes...");
   try {
     const recipes = await Recipe.find({});
     res.json(recipes);
   } catch (error) {
-    console.error("Error fetching recipes:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
 
-app.get("/api/recipes/:id", async (req, res) => {
+app.get("/api/recipes/:id", async (req, res, next) => {
   console.log(`Fetching recipe with id: ${req.params.id}`);
   const id = req.params.id;
 
@@ -38,12 +40,11 @@ app.get("/api/recipes/:id", async (req, res) => {
     }
     res.json(recipe);
   } catch (error) {
-    console.error("Error fetching recipe:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
 
-app.post("/api/recipes", async (req, res) => {
+app.post("/api/recipes", async (req, res, next) => {
   const body = req.body;
   if (!body.name || !body.ingredients) {
     return res.status(400).json({ error: "Name and ingredients are required" });
@@ -60,12 +61,11 @@ app.post("/api/recipes", async (req, res) => {
     const savedRecipe = await recipe.save();
     res.status(201).json(savedRecipe);
   } catch (error) {
-    console.error("Error saving recipe:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
 
-app.delete("/api/recipes/:id", async (req, res) => {
+app.delete("/api/recipes/:id", async (req, res, next) => {
   const id = req.params.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -79,12 +79,11 @@ app.delete("/api/recipes/:id", async (req, res) => {
     }
     res.status(204).end();
   } catch (error) {
-    console.error("Error deleting recipe:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
 
-app.put("/api/recipes/:id", async (req, res) => {
+app.put("/api/recipes/:id", async (req, res, next) => {
   const id = req.params.id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -113,10 +112,11 @@ app.put("/api/recipes/:id", async (req, res) => {
 
     res.json(updated);
   } catch (error) {
-    console.error("Error updating recipe:", error);
-    res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 });
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Recipe app backend is starting on port ${port}...`);
