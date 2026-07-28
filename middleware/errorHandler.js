@@ -1,4 +1,4 @@
-export default function errorHandler(err, req, res, next) {
+export default function errorHandler(err, req, res) {
   console.error(err);
 
   if (err.name === "ValidationError") {
@@ -8,6 +8,8 @@ export default function errorHandler(err, req, res, next) {
   if (err.name === "CastError") {
     // usually mongoose cast errors for invalid ObjectId
     return res.status(400).json({ error: "Malformed id" });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).json({ error: err.message });
   }
 
   if (err.code && err.code === 11000) {
